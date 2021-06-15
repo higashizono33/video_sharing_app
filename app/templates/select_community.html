@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Select Community{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+<div class="row justify-content-center mt-5">
+    <div class="col-5">
+        <div class="card p-2">
+            <div class="card-body">
+                <h3 class="mb-4">Select community</h3>
+                <form action="" method="POST" novalidate>
+                    {% csrf_token %}
+                    <select name="community" id="" class="form-control">
+                        {% for community in communities %}
+                        <option value="{{community.id}}">{{community.name}}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Select</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
