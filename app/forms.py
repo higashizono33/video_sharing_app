@@ -29,3 +29,9 @@ class VideoCreateForm(ModelForm):
         model = Video
         fields = ['url', 'title']
 
+class ResidentAddForm(ModelForm):
+    
+    class Meta:
+        model = Video
+        fields = ['url', 'title']
+

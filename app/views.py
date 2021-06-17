@@ -1,11 +1,8 @@
-from django.contrib.auth import models
-from django.http import request
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView, TemplateView, CreateView
 from .models import Video, Resident, Community
 from django.urls import reverse_lazy
 from .forms import ResidentCreateForm, CommunityCreateForm, VideoCreateForm
-from django.contrib import messages
 
 class IndexView(TemplateView):
     template_name = 'index.html'
@@ -20,6 +17,7 @@ class SelectCommunityView(TemplateView):
     
     def post(self, request, *args, **kwargs):
         community_id = request.POST['community']
+        request.session['community_id'] = community_id
         return redirect('home', community_id)
 
 class HomeView(ListView):
@@ -81,7 +79,48 @@ class ResidentCreateView(CreateView):
         community = get_object_or_404(Community, pk=self.request.POST['community'])
         form.instance.community = community
         form.save()
+        self.request.session['community_id'] = community.id
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy('home', kwargs = {'community_id': self.request.POST['community']})
+
+class AddView(CreateView):
+    model = Resident
+    form_class = ResidentCreateForm
+    template_name = 'add.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community_form'] = CommunityCreateForm()
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(AddView, self).get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs 
+    
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        community = get_object_or_404(Community, pk=self.request.POST['community'])
+        form.instance.community = community
+        form.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('add')
+
+def add_community(request):
+    if request.method == 'POST':
+        community_form = CommunityCreateForm(request.POST)
+        if community_form.is_valid():
+            community_form.instance.owner = request.user
+            community_form.save()
+            return redirect('add')
+        else:
+            form = ResidentCreateForm(user=request.user)
+            context = {
+                'community_form': community_form,
+                'form': form,
+            }
+        return render(request, 'add.html', context)
