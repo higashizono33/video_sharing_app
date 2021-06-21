@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Manage Resident{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+<div class="container mt-5">
+    <div class="row justify-content-md-center">
+        <div class="col-md-6">
+            <table class="table table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for resident in residents %}
+                <tr>
+                    <th scope="row">{{forloop.counter}}</th>
+                    <td>{{resident.name}}</td>
+                    <td>
+                        <a data-bs-toggle="modal" data-bs-target="#exampleModal{{forloop.counter}}" class="text-white">delete</a> 
+                    </td>
+                </tr>
+                <!-- Modal -->
+                <div class="modal fade" id="exampleModal{{forloop.counter}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Delete {{resident.name}}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        Are you sure?
+                        </div>
+                        <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <a href="{% url 'delete_resident' resident.id %}" class="btn btn-danger">Delete</a>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

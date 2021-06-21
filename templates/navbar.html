@@ -6,10 +6,16 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                 <li class="nav-item"><a class="nav-link active" aria-current="page" href="{% url 'home' request.session.community_id %}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'add' %}">Add</a></li>
+                {% if user.id is not None %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'add' %}">Add</a></li>
+                {% endif %}
                 <li class="nav-item"><a class="nav-link" href="#!">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
-                <!-- <li class="nav-item dropdown">
+                {% if user.id is not None %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'resident_logout' %}">Logout</a></li>
+                {% endif %}
+                    <!-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Shop</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="#!">All Products</a></li>
@@ -19,13 +25,11 @@
                     </ul>
                 </li> -->
             </ul>
-            <form class="d-flex">
-                <button class="btn btn-outline-dark" type="submit">
-                    <i class="bi-cart-fill me-1"></i>
-                    Resident
-                    <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                </button>
-            </form>
+            <a class="btn btn-outline-dark" href="{% url 'manage_resident' %}">
+                <i class="bi-cart-fill me-1"></i>
+                Resident
+                <span class="badge bg-dark text-white ms-1 rounded-pill">{{community.residents.all.count}}</span>
+            </a>
         </div>
     </div>
 </nav>

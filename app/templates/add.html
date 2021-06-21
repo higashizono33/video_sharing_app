@@ -7,12 +7,12 @@
     <div class="col-5">
         <div class="card p-2">
             <div class="card-body">
-                <h3 class="mb-4">Create your community</h3>
+                <h3 class="mb-4">Add your community</h3>
                 <form action="{% url 'add_community' %}" method="POST" novalidate>
                     {% csrf_token %}
                     {{community_form|crispy}}
-                    <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">Create</button>
+                    <div class="mt-5">
+                        <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
                 </form>
             </div>
@@ -21,12 +21,24 @@
     <div class="col-5">
         <div class="card p-2">
             <div class="card-body">
-                <h3 class="mb-4">Create your resident</h3>
+                <h3 class="mb-4">Add your resident</h3>
                 <form action="{% url 'add' %}" method="POST" novalidate>
                     {% csrf_token %}
                     {{form|crispy}}
                     <div class="mt-3">
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card p-2 mt-3">
+            <div class="card-body">
+                <h3 class="mb-4">Add video group</h3>
+                <form action="{% url 'add_group' %}" method="POST" novalidate>
+                    {% csrf_token %}
+                    {{group_form|crispy}}
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Submit</button>
                     </div>
                 </form>
             </div>

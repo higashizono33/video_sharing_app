@@ -7,7 +7,8 @@
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
-            <h1 class="display-4 fw-bolder">Chicago Blues</h1>
+            <h1 class="display-4 fw-bolder">{{community.name}}</h1>
+            {% if user.id is not None %}
             <form action="" method="POST" novalidate>
                 {% csrf_token %}
                 <div class="row">
@@ -18,8 +19,16 @@
                         {{ form.title|as_crispy_field }}
                     </div>
                 </div>
-                <button class="btn btn-primary px-lg-5">add</button>
+                <div class="row">
+                    <div class="form-group col-md-6 mb-0">
+                        {{ form.group|as_crispy_field }}
+                    </div>
+                    <div class="form-group col-md-6 mb-0 text-start pt-4">
+                        <button class="btn btn-primary px-lg-5">add</button>
+                    </div>
+                </div>
             </form>
+            {% endif %}
         </div>
     </div>
 </header>
@@ -33,7 +42,7 @@
                     <!-- New badge, uploaded within a week -->
                     <div class="badge bg-dark text-white position-absolute" style="top: 0.5rem; right: 0.5rem">New</div>
                     <!-- Video image-->
-                    <iframe width="269" height="300"
+                    <iframe width="269" height="250"
                         src="{{video.url}}">
                     </iframe>
                     <!-- <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." /> -->
@@ -48,7 +57,7 @@
                     </div>
                     <!-- Video actions-->
                     <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="#">View post</a></div>
+                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'video' video.id %}">View post</a></div>
                     </div>
                 </div>
             </div>

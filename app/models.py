@@ -14,7 +14,7 @@ class Community(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f'Community#{self.id}-{self.name}'
 
     def save(self, **kwargs):
         self.password = make_password(self.password, None, 'md5')
@@ -54,7 +54,8 @@ class Video(models.Model):
         return self.title
 
 class Post(models.Model):
-    posted_by = models.ForeignKey(Resident, related_name='posts', on_delete=models.CASCADE)
+    resident_posted = models.ForeignKey(Resident, related_name='posts', on_delete=models.CASCADE, null=True)
+    user_posted = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE, null=True)
     posted_to = models.ForeignKey(Video, related_name='posts', on_delete=models.CASCADE)
     post = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -64,7 +65,8 @@ class Post(models.Model):
         return f'post#{self.id}'
 
 class Comment(models.Model):
-    commented_by = models.ForeignKey(Resident, related_name='comments', on_delete=models.CASCADE)
+    resident_commented = models.ForeignKey(Resident, related_name='comments', on_delete=models.CASCADE, null=True)
+    user_commented = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE, null=True)
     commented_to = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
