@@ -1,30 +1,70 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% block content %}
 {% include 'navbar.html' %}
 <section class="pb-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="row gx-4 gx-lg-5">
-            <div class="mb-3">
+            <div class="mb-2">
                 <h1 class="display-6 fw-bolder">{{video.group.name}}</h1>
                 <h1 class="display-6 fw-bolder">{{video.title}}</h1>
+            </div>
+            <div class="d-flex justify-content-end mb-1">
+                <div class="pagination">
+                    <span class="step-links-post">
+                        {% if posts.has_previous %}
+                            <a id="first" href="?post_page=1">&laquo; first</a>
+                            <a id="prev" href="?post_page={{ posts.previous_page_number }}">previous</a>
+                        {% endif %}
+    
+                        <span class="current">
+                            Page {{ posts.number }} of {{ posts.paginator.num_pages }}.
+                        </span>
+    
+                        {% if posts.has_next %}
+                            <a id="next" href="?post_page={{ posts.next_page_number }}">next</a>
+                            <a id="last" href="?post_page={{ posts.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
             </div>
             <div class="col-md-6">
                 <!-- <img class="card-img-top mb-5 mb-md-0" src="{{video.url}}" alt="..." /> -->
                 <iframe width="580" height="500" src="{{video.url}}"></iframe>
                 <div class="small mb-1"></div>
                 <p class="lead">{{video.description}}For me, getting my business website made was a lot of tech wizardry things. Thankfully i get an ad on Facebook ragarding commence website. I get connected with BBB team.</p>
-                <div class="d-flex">
-                    <input class="form-control text-center me-3" id="inputQuantity" type="num" value="1" style="max-width: 3rem" />
-                    <button class="btn btn-outline-dark flex-shrink-0" type="button">
-                        <i class="bi-cart-fill me-1"></i>
-                        like
-                    </button>
+                <div class="d-flex" id="like_section">
+                    <!-- <input class="form-control text-center me-3" id="inputQuantity" type="num" value="1" style="max-width: 3rem" /> -->
+                    <span class="form-control text-center me-3" style="max-width: 3rem">{{video.resident_like.all.count}}</span>
+                    {% if user.id is not None %}
+                        <!-- <button class="btn btn-outline-dark flex-shrink-0" type="button"> -->
+                            <!-- <i class="bi-cart-fill me-1"></i> -->
+                            <span class="pt-2">resident likes</span>
+                        <!-- </button> -->
+                    {% else %}
+                        {% if is_liked %}
+                            <a href="{% url 'remove_like' video.id %}" class="like_btn">
+                                <button class="btn btn-outline-dark flex-shrink-0" type="button">
+                                    <!-- <i class="bi-cart-fill me-1"></i> -->
+                                    dislike
+                                </button>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'add_like' video.id %}" class="like_btn">
+                                <button class="btn btn-outline-dark flex-shrink-0" type="button">
+                                    <!-- <i class="bi-cart-fill me-1"></i> -->
+                                    like
+                                </button>
+                            </a>
+                        {% endif %}    
+                    {% endif %}
                 </div>
                 <div>
                     <div class="mt-3">
-                        <form action="" method="POST">
+                        <form action="" method="POST" id="form_post" videoId={{video.id}}>
                             {% csrf_token %}
+                            <span class="text-danger p_error"></span>
                             <textarea name="post" id="" cols="30" rows="3" class="form-control"></textarea>
                             <div>
                                 <button class="btn btn-primary d-block ms-auto mt-3">Post</button>
@@ -33,10 +73,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 ps-0">
+            <div class="col-md-6 ps-0" id="post_section">
                 <div class="container-fluid mt-100">
-                    <div class="row">
-                        <div class="col-md-12">
+                    <div class="row" id="ajax_postList_result">
+                        <div class="col-md-12" id="postList">
                             {% for post in posts %}
                             <div class="card mb-2">
                                 <div class="card-header">
@@ -52,11 +92,17 @@
                                                     {% else %}
                                                         <a href="javascript:void(0)" data-abc="true">{{post.resident_posted.name}}</a>
                                                         <div class="text-muted small ml-3 ms-1 pt-1">
-                                                            <div>Live since <strong>{{post.resident_posted.created_at}}</strong></div>
+                                                            <div>Live since <strong>{{post.resident_posted.created_at|date:"M d, Y"}}</strong></div>
                                                         </div>
                                                     {% endif %}
                                                 </div>
-                                                <div class="text-muted small">{{post.created_at}}</div>
+                                                {% if post.comments.all.count > 1 %}
+                                                    <div class="text-muted small">{{post.created_at|timesince}}<a href="#" class="ms-2 show-comment" postId="{{post.id}}">{{post.comments.all.count}} replies</a></div>
+                                                {% elif post.comments.all.count == 1 %}
+                                                    <div class="text-muted small">{{post.created_at|timesince}}<a href="#" class="ms-2 show-comment" postId="{{post.id}}">{{post.comments.all.count}} reply</a></div>
+                                                {% else %}
+                                                    <div class="text-muted small">{{post.created_at|timesince}}<span class="ms-2">No reply</span></div>
+                                                {% endif %}
                                             </div>
                                             <div>
                                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop{{forloop.counter}}">
@@ -73,7 +119,7 @@
                             </div>
                             {% for comment in comments %}
                                 {% if comment.commented_to.id == post.id %}
-                                <div class="card mb-2 ms-5">
+                                <div class="card mb-2 ms-5 comment-card-{{post.id}}" style="display: none;">
                                     <div class="card-header">
                                         <div class="media flex-wrap w-100 align-items-center"> <img src="https://i.imgur.com/iNmBizf.jpg" class="d-block ui-w-40 rounded-circle" alt="">
                                             <div class="d-flex justify-content-end align-items-center">
@@ -87,11 +133,11 @@
                                                         {% else %}
                                                             <a href="javascript:void(0)" data-abc="true">{{comment.resident_commented.name}}</a>
                                                             <div class="text-muted small ml-3 ms-1 pt-1">
-                                                                <div>Live since <strong>{{comment.resident_commented.created_at}}</strong></div>
+                                                                <div>Live since <strong>{{comment.resident_commented.created_at|date:"M d, Y"}}</strong></div>
                                                             </div>
                                                         {% endif %}
                                                     </div>
-                                                    <div class="text-muted small text-end">{{comment.created_at}}</div>
+                                                    <div class="text-muted small text-end">{{comment.created_at|timesince}}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -135,34 +181,50 @@
 <!-- Related items section-->
 <section class="py-5 bg-light">
     <div class="container px-4 px-lg-5 mt-5">
-        <h2 class="fw-bolder mb-4">Videos in same group</h2>
-        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
-            {% for v in videos %}
-            <div class="col mb-5">
-                <div class="card h-100">
-                    <!-- New badge, uploaded within a week -->
-                    <div class="badge bg-dark text-white position-absolute" style="top: 0.5rem; right: 0.5rem">New</div>
-                    <!-- Video image-->
-                    <iframe width="269" height="250"
-                        src="{{video.url}}">
-                    </iframe>
-                    <!-- <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." /> -->
-                    <!-- Video details-->
-                    <div class="card-body p-4">
-                        <div class="text-center">
-                            <!-- Video name-->
-                            <h5 class="fw-bolder">{{v.title}}</h5>
-                            <!-- Video price-->
-                            {{v.created_at}}
+        <h2 class="fw-bolder mb-4">Videos in {{video.group.name}}</h2>
+        <div class="pagination">
+            <span class="step-links">
+                {% if videos.has_previous %}
+                    <!-- <a href="?page=1">&laquo; first</a> -->
+                    <a id="prev" href="?page={{ videos.previous_page_number }}" style="position: absolute; top: 1450px; left: 50px; font-size: 3em;">&laquo;</a>
+                {% endif %}
+                {% if videos.has_next %}
+                    <a id="next" href="?page={{ videos.next_page_number }}" style="position: absolute; top: 1450px; left: 1350px; font-size: 3em;">&raquo;</a>
+                    <!-- <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a> -->
+                {% endif %}
+            </span>
+        </div>
+        <div id="ajax_videoList_result">
+            <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center" id="videoList">
+                {% for v in videos %}
+                <div class="col mb-5">
+                    <div class="card h-100">
+                        <!-- New badge, uploaded within a week -->
+                        {% if v.is_new %}
+                            <div class="badge bg-danger text-white position-absolute" style="top: 0.5rem; right: 0.5rem">New</div>
+                        {% endif %}
+                        <!-- Video image-->
+                        <iframe width="269" height="250"
+                            src="{{v.url}}">
+                        </iframe>
+                        <!-- <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." /> -->
+                        <!-- Video details-->
+                        <div class="card-body p-4">
+                            <div class="text-center">
+                                <!-- Video name-->
+                                <h5 class="fw-bolder text-nowrap">{{v.title}}</h5>
+                                <!-- Video price-->
+                                {{v.created_at|timesince}}
+                            </div>
+                        </div>
+                        <!-- Video actions-->
+                        <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                            <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'video' v.id %}">View detail</a></div>
                         </div>
                     </div>
-                    <!-- Video actions-->
-                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                        <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'video' video.id %}">View post</a></div>
-                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
     </div>
 </section>
@@ -177,3 +239,7 @@
 <!-- <script src="js/scripts.js"></script>
 </body>
 </html> -->
+{% block javascript %}
+<script type="text/javascript" src="{% static 'js/pagination.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/function.js' %}"></script>
+{% endblock %}

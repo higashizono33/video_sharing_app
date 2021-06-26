@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.core import validators
+from datetime import datetime
+from django.http import request
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -44,6 +47,7 @@ class VideoGroup(models.Model):
 class Video(models.Model):
     community = models.ForeignKey(Community, related_name='videos', on_delete=models.CASCADE, null=True)
     group = models.ForeignKey(VideoGroup, related_name='videos', on_delete=models.CASCADE, null=True)
+    resident_like = models.ManyToManyField(Resident, related_name='video_like')
     title = models.CharField(max_length=255)
     url = models.URLField()
     description = models.TextField()
@@ -52,6 +56,21 @@ class Video(models.Model):
 
     def __str__(self):
         return self.title
+
+    def is_new(self):
+        now = timezone.now()
+        if (now - self.created_at).days < 7:
+            return True
+        else:
+            return False
+    
+    # def is_liked(self, request):
+    #     resident = Resident.objects.get(id=request.session['resident_id'])
+    #     print(resident)
+    #     if resident in self.resident_like.all():
+    #         return True
+    #     else:
+    #         return False
 
 class Post(models.Model):
     resident_posted = models.ForeignKey(Resident, related_name='posts', on_delete=models.CASCADE, null=True)

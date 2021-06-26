@@ -1,0 +1,94 @@
+{% for post in posts %}
+<div class="card mb-2">
+    <div class="card-header">
+        <div class="media flex-wrap w-100 align-items-center"> <img src="https://i.imgur.com/iNmBizf.jpg" class="d-block ui-w-40 rounded-circle" alt="">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="media-body ml-3 d-flex">
+                        {% if post.user_posted %}
+                            <a href="javascript:void(0)" data-abc="true">{{post.user_posted.first_name}} {{post.user_posted.last_name}}</a>
+                            <div class="text-muted small ml-3 ms-1 pt-1">
+                                <div>The person is <strong>Owner</strong></div>
+                            </div>
+                        {% else %}
+                            <a href="javascript:void(0)" data-abc="true">{{post.resident_posted.name}}</a>
+                            <div class="text-muted small ml-3 ms-1 pt-1">
+                                <div>Live since <strong>{{post.resident_posted.created_at|date:"M d, Y"}}</strong></div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if post.comments.all.count > 1 %}
+                        <div class="text-muted small">{{post.created_at|timesince}}<a href="#" class="ms-2 show-comment" postId="{{post.id}}">{{post.comments.all.count}} replies</a></div>
+                    {% elif post.comments.all.count == 1 %}
+                        <div class="text-muted small">{{post.created_at|timesince}}<a href="#" class="ms-2 show-comment" postId="{{post.id}}">{{post.comments.all.count}} reply</a></div>
+                    {% else %}
+                        <div class="text-muted small">{{post.created_at|timesince}}<span class="ms-2">No reply</span></div>
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop{{forloop.counter}}">
+                        Reply
+                    </button>
+                </div>
+                <!-- <div><button type="button" class="btn btn-primary">Reply</button></div> -->
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="mb-0">{{post.post}}</p>
+    </div>
+</div>
+{% for comment in comments %}
+    {% if comment.commented_to.id == post.id %}
+    <div class="card mb-2 ms-5 comment-card-{{post.id}}" style="display: none;">
+        <div class="card-header">
+            <div class="media flex-wrap w-100 align-items-center"> <img src="https://i.imgur.com/iNmBizf.jpg" class="d-block ui-w-40 rounded-circle" alt="">
+                <div class="d-flex justify-content-end align-items-center">
+                    <div>
+                        <div class="media-body ml-3 d-flex">
+                            {% if comment.user_commented %}
+                                <a href="javascript:void(0)" data-abc="true">{{comment.user_commented.first_name}} {{comment.user_commented.last_name}}</a>
+                                <div class="text-muted small ml-3 ms-1 pt-1">
+                                    <div>The person is <strong>Owner</strong></div>
+                                </div>
+                            {% else %}
+                                <a href="javascript:void(0)" data-abc="true">{{comment.resident_commented.name}}</a>
+                                <div class="text-muted small ml-3 ms-1 pt-1">
+                                    <div>Live since <strong>{{comment.resident_commented.created_at|date:"M d, Y"}}</strong></div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small text-end">{{comment.created_at|timesince}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">{{comment.comment}}</p>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+<!-- Modal -->
+<div class="modal fade" id="staticBackdrop{{forloop.counter}}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Enter Your Reply</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form action="{% url 'reply_comment' post.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-body">
+                <input type="hidden" name="video_id" value={{video.id}} >
+                <textarea name="comment" id="" cols="30" rows="10" class="form-control"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+{% endfor %}

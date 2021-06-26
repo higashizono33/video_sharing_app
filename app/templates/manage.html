@@ -6,11 +6,33 @@
 <div class="container mt-5">
     <div class="row justify-content-md-center">
         <div class="col-md-6">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <div class="row ms-5">
+                    <div class="col-md-8">
+                        <select name="community_id" id="" class="form-control">
+                            {% for c in communities %}
+                                {% if c.id == community.id %}
+                                    <option value={{c.id}} selected>{{c.name}}</option>
+                                {% else %}
+                                    <option value={{c.id}}>{{c.name}}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary">set</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-5">
             <table class="table table table-dark table-striped">
                 <thead>
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Username</th>
+                        <th scope="col">Admin</th>
                         <th scope="col">Action</th>
                     </tr>
                 </thead>
@@ -19,6 +41,21 @@
                 <tr>
                     <th scope="row">{{forloop.counter}}</th>
                     <td>{{resident.name}}</td>
+                    <td>
+                        <form action="{% url 'set_admin' resident.id %}" method="POST">
+                            {% csrf_token %}
+                            <select name="admin" id="">
+                                {% if resident.is_staff %}
+                                    <option value="True" selected>Admin</option>
+                                    <option value="False">Non Admin</option>
+                                {% else %}
+                                    <option value="True">Admin</option>
+                                    <option value="False" selected>Non Admin</option>
+                                {% endif %}
+                            </select>
+                            <button type="submit" class="btn btn-secondary py-0 ms-3">Set</button>
+                        </form>
+                    </td>
                     <td>
                         <a data-bs-toggle="modal" data-bs-target="#exampleModal{{forloop.counter}}" class="text-white">delete</a> 
                     </td>

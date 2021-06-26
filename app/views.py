@@ -9,6 +9,9 @@ from django.urls import reverse_lazy
 from .forms import ResidentCreateForm, CommunityCreateForm, VideoCreateForm, ResidentLoginForm, GroupCreateForm
 from django.views.generic.edit import FormView
 from django.contrib.auth.hashers import check_password
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 
 class IndexView(TemplateView):
@@ -31,7 +34,7 @@ class HomeView(ListView):
     model = Video
     template_name = 'home.html'
     context_object_name = 'videos'
-    paginate_by = 8
+    paginate_by = 4
 
     def get_queryset(self):
         queryset = super(HomeView, self).get_queryset()
@@ -43,6 +46,9 @@ class HomeView(ListView):
         context = super().get_context_data(**kwargs)
         context['form'] = VideoCreateForm()
         community = get_object_or_404(Community, pk=self.kwargs['community_id'])
+        if 'resident_id' in self.request.session:
+            resident = get_object_or_404(Resident, pk=self.request.session['resident_id'])
+            context['resident'] = resident
         context['community'] = community
         return context
 
@@ -166,12 +172,27 @@ class VideoDetailView(DetailView):
         context['community'] = get_object_or_404(Community, pk=self.request.session['community_id'])
         video = get_object_or_404(Video, pk=self.kwargs['pk'])
         group = self.object.group
-        context['videos'] = Video.objects.filter(group=group).order_by('-created_at')
-        context['posts'] = Post.objects.filter(posted_to=video).order_by('-created_at')
+        videos = Video.objects.filter(group=group).order_by('-created_at')
+        page_number = self.request.GET.get('page')
+        paginator = Paginator(videos, 4)
+        context['videos'] = paginator.get_page(page_number)
+        posts = Post.objects.filter(posted_to=video).order_by('-created_at')
+        post_page_number = self.request.GET.get('post_page')
+        post_paginator = Paginator(posts, 4)
+        context['posts'] = post_paginator.get_page(post_page_number)
         context['comments'] = Comment.objects.all().order_by('-created_at')
+        if 'resident_id' in self.request.session:
+            resident = get_object_or_404(Resident, pk=self.request.session['resident_id'])
+            context['resident'] = resident
+            if resident in video.resident_like.all():
+                context['is_liked'] = True
+            else:
+                context['is_liked'] = False
         return context
 
     def post(self, request, *args, **kwargs):
+        if len(request.POST['post']) < 15:
+            return JsonResponse({'error': 'Please enter your post at least 15 charactors'})
         video = get_object_or_404(Video, pk=kwargs['pk'])
         if 'resident_id' not in request.session:
             new = Post.objects.create(
@@ -186,7 +207,16 @@ class VideoDetailView(DetailView):
                 posted_to = video,
                 post = request.POST['post']
             )
-        return redirect('video', pk=kwargs['pk'])
+        posts = Post.objects.filter(posted_to=video).order_by('-created_at')
+        post_page_number = self.request.GET.get('post_page')
+        post_paginator = Paginator(posts, 4)
+        posts = post_paginator.get_page(post_page_number)
+        context = {
+            'posts': posts,
+            'comments': Comment.objects.all().order_by('-created_at'),
+        }
+        html = render_to_string('partial/post.html', context, request=request)
+        return JsonResponse({'html': html})
 
 def reply_comment(request, post_id):
     if request.method == 'POST':
@@ -205,6 +235,32 @@ def reply_comment(request, post_id):
                 comment = request.POST['comment']
             )
     return redirect('video', pk=request.POST['video_id'])
+
+def add_like(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    if 'resident_id' in request.session:
+        resident = get_object_or_404(Resident, pk=request.session['resident_id'])
+        video.resident_like.add(resident)
+        video.save()
+    context = {
+        'is_liked': True,
+        'video': video,
+    }
+    html = render_to_string('partial/like.html', context, request=request)
+    return JsonResponse({'html': html})
+
+def remove_like(request, pk):
+    video = get_object_or_404(Video, pk=pk)
+    if 'resident_id' in request.session:
+        resident = get_object_or_404(Resident, pk=request.session['resident_id'])
+        video.resident_like.remove(resident)
+        video.save()
+    context = {
+        'is_liked': False,
+        'video': video,
+    }
+    html = render_to_string('partial/like.html', context, request=request)
+    return JsonResponse({'html': html})
     
 class ResidentLoginView(FormView):
     template_name = 'registration/resident_login.html'
@@ -239,8 +295,25 @@ class ManageResidentView(ListView):
         community = get_object_or_404(Community, pk=self.request.session['community_id'])
         queryset = Resident.objects.filter(community=community)
         return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = get_object_or_404(Community, pk=self.request.session['community_id'])
+        context['communities'] = Community.objects.filter(owner=self.request.user)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        request.session['community_id'] = self.request.POST['community_id']
+        return redirect('manage_resident')
 
 def delete_resident(request, resident_id):
     resident = get_object_or_404(Resident, pk=resident_id)
     resident.delete()
+    return redirect('manage_resident')
+
+def set_admin(request, resident_id):
+    if request.method == 'POST':
+        resident = get_object_or_404(Resident, pk=resident_id)
+        resident.is_staff = request.POST['admin']
+        resident.save()
     return redirect('manage_resident')
