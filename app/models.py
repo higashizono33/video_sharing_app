@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.core import validators
-from datetime import datetime
-from django.http import request
 from django.utils import timezone
 
 User = get_user_model()
@@ -63,14 +61,6 @@ class Video(models.Model):
             return True
         else:
             return False
-    
-    # def is_liked(self, request):
-    #     resident = Resident.objects.get(id=request.session['resident_id'])
-    #     print(resident)
-    #     if resident in self.resident_like.all():
-    #         return True
-    #     else:
-    #         return False
 
 class Post(models.Model):
     resident_posted = models.ForeignKey(Resident, related_name='posts', on_delete=models.CASCADE, null=True)

@@ -1,8 +1,5 @@
-from django.contrib.auth import login
-from django.http import request
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView, TemplateView, CreateView
-from django.views.generic.base import View
 from django.views.generic.detail import DetailView
 from .models import Comment, Video, Resident, Community, Post
 from django.urls import reverse_lazy
@@ -12,10 +9,12 @@ from django.contrib.auth.hashers import check_password
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.template.context_processors import csrf
+from crispy_forms.utils import render_crispy_form
 
 
 class IndexView(TemplateView):
-    template_name = 'index.html'
+    template_name = 'intro.html'
 
 class SelectCommunityView(TemplateView):
     template_name = 'select_community.html'
@@ -39,12 +38,12 @@ class HomeView(ListView):
     def get_queryset(self):
         queryset = super(HomeView, self).get_queryset()
         community = get_object_or_404(Community, pk=self.kwargs['community_id'])
-        queryset = Video.objects.filter(community=community)
+        queryset = Video.objects.filter(community=community).order_by('-created_at')
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = VideoCreateForm()
+        context['form'] = VideoCreateForm(community_id=self.kwargs['community_id'])
         community = get_object_or_404(Community, pk=self.kwargs['community_id'])
         if 'resident_id' in self.request.session:
             resident = get_object_or_404(Resident, pk=self.request.session['resident_id'])
@@ -53,21 +52,22 @@ class HomeView(ListView):
         return context
 
     def post(self, request, *args, **kwargs):
-        form = VideoCreateForm(self.request.POST)
+        form = VideoCreateForm(self.request.POST, community_id=self.kwargs['community_id'])
         community = get_object_or_404(Community, pk=kwargs['community_id'])
         if form.is_valid():
             new_video = form.save(commit=False)
             new_video.community = community
             form.save()
-            return redirect('home', kwargs['community_id'])
+            return JsonResponse({'success': True})
         else:
-            community = get_object_or_404(Community, pk=self.kwargs['community_id'])
-            context = {
-                'form': form,
-                'videos': Video.objects.filter(community=community),
-                'community': community
-            }
-            return render(request, 'home.html', context)
+            ctx = {}
+            ctx.update(csrf(request))
+            form_html = render_crispy_form(form, context=ctx)
+            return JsonResponse({'success': False, 'form_html': form_html})
+def delete_video(request, video_id):
+    video = get_object_or_404(Video, pk=video_id)
+    video.delete()
+    return redirect('home', request.session['community_id'])
 
 class CommunityCreateView(CreateView):
     model = Community
@@ -261,7 +261,17 @@ def remove_like(request, pk):
     }
     html = render_to_string('partial/like.html', context, request=request)
     return JsonResponse({'html': html})
-    
+
+def add_description(request, pk):
+    if request.method == 'POST':
+        if len(request.POST['description']) < 15:
+            return JsonResponse({'error': 'Please enter your description at least 15 charactors'})
+        else:    
+            video = get_object_or_404(Video, pk=pk)
+            video.description = request.POST['description']
+            video.save()
+            return JsonResponse({'description': video.description})
+
 class ResidentLoginView(FormView):
     template_name = 'registration/resident_login.html'
     form_class = ResidentLoginForm

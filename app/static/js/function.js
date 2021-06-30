@@ -38,4 +38,29 @@ $(document).ready(function(){
             }
         })
     })
+    $('body').on('click', '.lead', function(e){
+        e.preventDefault();
+        var form = $(this).siblings('form');
+        var p = $(this);
+        var videoId = $(this).attr('videoId');
+        $(p).hide();
+        $(form).show();
+        $(form).on('focusout', function(){
+            $.ajax({
+                url: '/add_description/' + videoId,
+                type: 'post',
+                data: $(form).serialize(),
+                dataType: 'json',
+                success: function(res){
+                    if(res.error){
+                        $(form).find('.desc_error').html('*'+res.error)
+                    } else {
+                        $(form).hide();
+                        $(p).html(res.description+'<span class="glyphicon ms-2">&#x270f;</span>');
+                        $(p).show();
+                    }
+                }
+            })
+        })
+    })
 })

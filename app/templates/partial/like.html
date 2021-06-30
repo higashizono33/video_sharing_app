@@ -1,21 +1,16 @@
 <span class="form-control text-center me-3" style="max-width: 3rem">{{video.resident_like.all.count}}</span>
 {% if user.id is not None %}
-    <!-- <button class="btn btn-outline-dark flex-shrink-0" type="button"> -->
-        <!-- <i class="bi-cart-fill me-1"></i> -->
-        <span class="pt-2">resident likes</span>
-    <!-- </button> -->
+    <span class="pt-2">resident likes</span>
 {% else %}
     {% if is_liked %}
         <a href="{% url 'remove_like' video.id %}" class="like_btn">
             <button class="btn btn-outline-dark flex-shrink-0" type="button">
-                <!-- <i class="bi-cart-fill me-1"></i> -->
                 dislike
             </button>
         </a>
     {% else %}
         <a href="{% url 'add_like' video.id %}" class="like_btn">
             <button class="btn btn-outline-dark flex-shrink-0" type="button">
-                <!-- <i class="bi-cart-fill me-1"></i> -->
                 like
             </button>
         </a>

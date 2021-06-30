@@ -1,50 +1,41 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% block extra_header %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
-<!-- Header-->
-<!-- Make users can select a background-color -->
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
-            <h1 class="display-4 fw-bolder">{{community.name}}</h1>
+            <div class="d-flex justify-content-center align-items-center">
+                <h1 class="display-4 fw-bolder me-4" id="community" communityId="{{community.id}}">{{community.name}}</h1>
+                <input type="text" value="/resident_login/{{community.id}}" id="myInput" style="display: none;">
+                <div class="toolTip">
+                    <button onclick="myFunction()" onmouseout="outFunc()" class="btn btn-primary">
+                        <span class="tooltiptext" id="myTooltip">Copy to clipboard</span>
+                        LogIn Link
+                    </button>
+                </div>
+            </div>
             {% if user.id is not None or resident.is_staff %}
-            <form action="" method="POST" novalidate>
                 {% csrf_token %}
-                <div class="row">
-                    <div class="form-group col-md-6 mb-0">
-                        {{ form.url|as_crispy_field }}
-                    </div>
-                    <div class="form-group col-md-6 mb-0">
-                        {{ form.title|as_crispy_field }}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="form-group col-md-6 mb-0">
-                        {{ form.group|as_crispy_field }}
-                    </div>
-                    <div class="form-group col-md-6 mb-0 text-start pt-4">
-                        <button class="btn btn-primary px-lg-5">add</button>
-                    </div>
-                </div>
-            </form>
+                {% crispy form %}
             {% endif %}
         </div>
     </div>
 </header>
-<!-- Section-->
 <section class="py-5">
-    <div class="container px-4 px-lg-5 mt-5">
+    <div class="container px-4 px-lg-5 mt-5" style="position: relative;">
         <div class="pagination">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <!-- <a href="?page=1">&laquo; first</a> -->
-                    <a id="prev" href="?page={{ page_obj.previous_page_number }}" style="position: absolute; top: 750px; left: 50px; font-size: 3em;">&laquo;</a>
+                    <a id="prev" href="?page={{ page_obj.previous_page_number }}" style="position: absolute; top: 170px; left: -10px; font-size: 3em;">&laquo;</a>
                 {% endif %}
                 {% if page_obj.has_next %}
-                    <a id="next" href="?page={{ page_obj.next_page_number }}" style="position: absolute; top: 750px; left: 1350px; font-size: 3em;">&raquo;</a>
-                    <!-- <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a> -->
+                    <a id="next" href="?page={{ page_obj.next_page_number }}" style="position: absolute; top: 170px; left: 1300px; font-size: 3em;">&raquo;</a>
                 {% endif %}
             </span>
         </div>
@@ -61,19 +52,18 @@
                             <iframe width="269" height="250"
                                 src="{{video.url}}">
                             </iframe>
-                            <!-- <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." /> -->
                             <!-- Video details-->
                             <div class="card-body p-4">
                                 <div class="text-center">
-                                    <!-- Video name-->
-                                    <h5 class="fw-bolder text-nowrap">{{video.title}}</h5>
-                                    <!-- Video price-->
-                                    {{video.created_at|timesince}} ago
+                                    <h5 class="fw-bolder text-nowrap mb-0">{{video.title}}</h5>
+                                    <a href="{% url 'delete_video' video.id %}">delete</a>
+                                    <span class="d-block">
+                                        {{video.created_at|timesince}} ago
+                                    </span>
                                 </div>
                             </div>
-                            <!-- Video actions-->
                             <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                                <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'video' video.id %}">View detail</a></div>
+                                <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'video' video.id %}">detail view</a></div>
                             </div>
                         </div>
                     </div>
@@ -89,4 +79,45 @@
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript" src="{% static 'js/pagination.js' %}"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $(document).on('submit', 'form', function(e){
+            e.preventDefault();
+            var community_id = $('#community').attr('communityId');
+            $.ajax({
+                url: '/home/community/'+community_id,
+                type: "POST",
+                data: $(this).serialize(),
+                success: function(data) {
+                    if (!(data['success'])) {
+                        console.log(data)
+                        $('form').replaceWith(data['form_html']);
+                    }
+                    else {
+                        window.location.replace('/home/community/'+community_id);
+                    }
+                },
+                error: function () {
+                    $('form').find('.error-message').show();
+                }
+            });
+        })
+    })
+    function myFunction() {
+        $('#myInput').show();
+        var copyText = document.getElementById("myInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        $('#myInput').hide();
+        
+        var tooltip = document.getElementById("myTooltip");
+        tooltip.innerHTML = "Copied: " + copyText.value;
+    }
+
+    function outFunc() {
+        var tooltip = document.getElementById("myTooltip");
+        tooltip.innerHTML = "Copy to clipboard";
+    }
+</script>
 {% endblock %}

@@ -7,7 +7,7 @@
     <div class="container px-4 px-lg-5 my-5">
         <div class="row gx-4 gx-lg-5">
             <div class="mb-2">
-                <h1 class="display-6 fw-bolder">{{video.group.name}}</h1>
+                <h1 class="display-5 fw-bolder">{{video.group.name}}</h1>
                 <h1 class="display-6 fw-bolder">{{video.title}}</h1>
             </div>
             <div class="d-flex justify-content-end mb-1">
@@ -30,30 +30,32 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <!-- <img class="card-img-top mb-5 mb-md-0" src="{{video.url}}" alt="..." /> -->
                 <iframe width="580" height="500" src="{{video.url}}"></iframe>
                 <div class="small mb-1"></div>
-                <p class="lead">{{video.description}}For me, getting my business website made was a lot of tech wizardry things. Thankfully i get an ad on Facebook ragarding commence website. I get connected with BBB team.</p>
+                {% if video.description == '' %}
+                    <p class="lead" videoId="{{video.id}}">click here to add description</p>
+                {% else %}
+                    <p class="lead" videoId="{{video.id}}">{{video.description}}<span class="glyphicon ms-2">&#x270f;</span></p>
+                {% endif %}
+                <form action="{% url 'add_description' video.id %}" style="display: none;" id="descForm">
+                    {% csrf_token %}
+                    <span class="text-danger desc_error"></span>
+                    <textarea name="description" class="form-control mb-2" id="" cols="30" rows="3">{{video.description}}</textarea>
+                </form>
                 <div class="d-flex" id="like_section">
-                    <!-- <input class="form-control text-center me-3" id="inputQuantity" type="num" value="1" style="max-width: 3rem" /> -->
                     <span class="form-control text-center me-3" style="max-width: 3rem">{{video.resident_like.all.count}}</span>
                     {% if user.id is not None %}
-                        <!-- <button class="btn btn-outline-dark flex-shrink-0" type="button"> -->
-                            <!-- <i class="bi-cart-fill me-1"></i> -->
-                            <span class="pt-2">resident likes</span>
-                        <!-- </button> -->
+                        <span class="pt-2">resident likes</span>
                     {% else %}
                         {% if is_liked %}
                             <a href="{% url 'remove_like' video.id %}" class="like_btn">
                                 <button class="btn btn-outline-dark flex-shrink-0" type="button">
-                                    <!-- <i class="bi-cart-fill me-1"></i> -->
                                     dislike
                                 </button>
                             </a>
                         {% else %}
                             <a href="{% url 'add_like' video.id %}" class="like_btn">
                                 <button class="btn btn-outline-dark flex-shrink-0" type="button">
-                                    <!-- <i class="bi-cart-fill me-1"></i> -->
                                     like
                                 </button>
                             </a>
@@ -109,7 +111,6 @@
                                                     Reply
                                                 </button>
                                             </div>
-                                            <!-- <div><button type="button" class="btn btn-primary">Reply</button></div> -->
                                         </div>
                                     </div>
                                 </div>
@@ -180,17 +181,15 @@
 </section>
 <!-- Related items section-->
 <section class="py-5 bg-light">
-    <div class="container px-4 px-lg-5 mt-5">
+    <div class="container px-4 px-lg-5 mt-5" style="position: relative;">
         <h2 class="fw-bolder mb-4">Videos in {{video.group.name}}</h2>
         <div class="pagination">
             <span class="step-links">
                 {% if videos.has_previous %}
-                    <!-- <a href="?page=1">&laquo; first</a> -->
-                    <a id="prev" href="?page={{ videos.previous_page_number }}" style="position: absolute; top: 1450px; left: 50px; font-size: 3em;">&laquo;</a>
+                    <a id="prev" href="?page={{ videos.previous_page_number }}" style="position: absolute; top: 230px; left: -10px; font-size: 3em;">&laquo;</a>
                 {% endif %}
                 {% if videos.has_next %}
-                    <a id="next" href="?page={{ videos.next_page_number }}" style="position: absolute; top: 1450px; left: 1350px; font-size: 3em;">&raquo;</a>
-                    <!-- <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a> -->
+                    <a id="next" href="?page={{ videos.next_page_number }}" style="position: absolute; top: 230px; left: 1300px; font-size: 3em;">&raquo;</a>
                 {% endif %}
             </span>
         </div>
@@ -207,7 +206,6 @@
                         <iframe width="269" height="250"
                             src="{{v.url}}">
                         </iframe>
-                        <!-- <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." /> -->
                         <!-- Video details-->
                         <div class="card-body p-4">
                             <div class="text-center">
@@ -233,12 +231,6 @@
     <div class="container"><p class="m-0 text-center text-white">Copyright &copy; Your Website 2021</p></div>
 </footer>
 {% endblock %}
-<!-- Bootstrap core JS-->
-<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"></script> -->
-<!-- Core theme JS-->
-<!-- <script src="js/scripts.js"></script>
-</body>
-</html> -->
 {% block javascript %}
 <script type="text/javascript" src="{% static 'js/pagination.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/function.js' %}"></script>
