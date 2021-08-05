@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView, TemplateView, CreateView
 from django.views.generic.detail import DetailView
-from .models import Comment, Video, Resident, Community, Post
+from .models import Comment, Video, Resident, Community, Post, VideoGroup
 from django.urls import reverse_lazy
 from .forms import ResidentCreateForm, CommunityCreateForm, VideoCreateForm, ResidentLoginForm, GroupCreateForm
 from django.views.generic.edit import FormView
@@ -11,7 +11,16 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.template.context_processors import csrf
 from crispy_forms.utils import render_crispy_form
+from django.contrib import messages
 
+import re
+
+# convert url to embedded type
+yt_link = re.compile(r'(https?://)?(www\.)?((youtu\.be/)|(youtube\.com/watch/?\?v=))([A-Za-z0-9-_]+)', re.I)
+yt_embed = "https://www.youtube.com/embed/{0}"
+
+def convert_ytframe(text):
+    return yt_link.sub(lambda match: yt_embed.format(match.groups()[5]), text)
 
 class IndexView(TemplateView):
     template_name = 'intro.html'
@@ -56,6 +65,7 @@ class HomeView(ListView):
         community = get_object_or_404(Community, pk=kwargs['community_id'])
         if form.is_valid():
             new_video = form.save(commit=False)
+            new_video.url = convert_ytframe(self.request.POST['url'])
             new_video.community = community
             form.save()
             return JsonResponse({'success': True})
@@ -64,6 +74,7 @@ class HomeView(ListView):
             ctx.update(csrf(request))
             form_html = render_crispy_form(form, context=ctx)
             return JsonResponse({'success': False, 'form_html': form_html})
+
 def delete_video(request, video_id):
     video = get_object_or_404(Video, pk=video_id)
     video.delete()
@@ -71,36 +82,37 @@ def delete_video(request, video_id):
 
 class CommunityCreateView(CreateView):
     model = Community
-    fields = ['name', 'description', 'password']
+    form_class = CommunityCreateForm
     template_name = 'community.html'
     success_url = reverse_lazy('create_resident')
     
     def form_valid(self, form):
         form.instance.owner = self.request.user
-        form.save()
+        new_community = form.save()
+        print(new_community.id)
+        self.request.session['community_id'] = new_community.id
         return super().form_valid(form)
 
 class ResidentCreateView(CreateView):
     model = Resident
     form_class = ResidentCreateForm
     template_name = 'resident.html'
-    # success_url = reverse_lazy('home')
+    success_url = reverse_lazy('create_resident')
 
     def get_form_kwargs(self):
         kwargs = super(ResidentCreateView, self).get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs 
-    
-    def form_valid(self, form):
-        form.instance.owner = self.request.user
-        community = get_object_or_404(Community, pk=self.request.POST['community'])
-        form.instance.community = community
-        form.save()
-        self.request.session['community_id'] = community.id
-        return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse_lazy('home', kwargs = {'community_id': self.request.POST['community']})
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.owner = self.request.user
+        community = get_object_or_404(Community, pk=self.request.session['community_id'])
+        obj.community = community
+        obj.save()
+        messages.success(self.request, f'{obj.name} was added')
+
+        return super().form_valid(form)
 
 class AddView(CreateView):
     model = Resident
@@ -124,6 +136,8 @@ class AddView(CreateView):
         community = get_object_or_404(Community, pk=self.request.POST['community'])
         form.instance.community = community
         form.save()
+        name = self.request.POST['name']
+        messages.success(self.request, f'{name} was added')
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -139,10 +153,12 @@ def add_community(request):
         else:
             form = ResidentCreateForm(user=request.user)
             group_form = GroupCreateForm(user=request.user)
+            community = get_object_or_404(Community, pk=request.session['community_id'])
             context = {
                 'community_form': community_form,
                 'group_form': group_form,
                 'form': form,
+                'community': community,
             }
         return render(request, 'add.html', context)
 
@@ -155,10 +171,12 @@ def add_group(request):
         else:
             form = ResidentCreateForm(user=request.user)
             community_form = CommunityCreateForm()
+            community = get_object_or_404(Community, pk=request.session['community_id'])
             context = {
                 'community_form': community_form,
                 'group_form': group_form,
                 'form': form,
+                'community': community,
             }
         return render(request, 'add.html', context)
 
@@ -275,10 +293,15 @@ def add_description(request, pk):
 class ResidentLoginView(FormView):
     template_name = 'registration/resident_login.html'
     form_class = ResidentLoginForm
-    # success_url = '/index/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['community'] = get_object_or_404(Community, pk=self.kwargs['community_id'])
+        return context
     
     def form_valid(self, form):
         community = get_object_or_404(Community, pk=self.kwargs['community_id'])
+        print(self.request.POST['password'])
         if check_password(self.request.POST['password'], community.password):
             residents = Resident.objects.filter(community=community)
             for resident in residents:
@@ -287,7 +310,10 @@ class ResidentLoginView(FormView):
                     self.request.session['resident_id'] = resident.id
                     self.request.session['community_id'] = community.id
                     return redirect('home', community.id)
+            print('the username does not exist')
+            return redirect('resident_login', self.kwargs['community_id'])
         else:
+            print('wrong password')
             return redirect('resident_login', self.kwargs['community_id'])
 
 def resident_logout(request):
@@ -327,3 +353,64 @@ def set_admin(request, resident_id):
         resident.is_staff = request.POST['admin']
         resident.save()
     return redirect('manage_resident')
+
+class VideoListView(ListView):
+    model = Video
+    template_name = 'list.html'
+    context_object_name = 'videos'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super(VideoListView, self).get_queryset()
+        communities = Community.objects.filter(owner=self.request.user)
+        queryset = Video.objects.filter(community__in=communities)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        community = get_object_or_404(Community, pk=self.request.session['community_id'])
+        context['community'] = community
+        context['communities'] = Community.objects.filter(owner=self.request.user)
+        return context
+
+def edit_video_community(request, pk):
+    if request.method == 'POST':
+        edit_video = get_object_or_404(Video, pk=pk)
+        new_community = get_object_or_404(Community, pk=request.POST['community'])
+        edit_video.community = new_community
+        edit_video.save()
+        context = {
+            'video': edit_video,
+        }
+        html = render_to_string('partial/selection.html', context, request=request)
+        return JsonResponse({'html': html})
+
+def edit_video_group(request, pk):
+    if request.method == 'POST':
+        edit_video = get_object_or_404(Video, pk=pk)
+        new_group = get_object_or_404(VideoGroup, pk=request.POST['group'])
+        edit_video.group = new_group
+        edit_video.save()
+        return JsonResponse({'success': True})
+
+def edit_video_title(request, pk):
+    if request.method == 'POST':
+        edit_video = get_object_or_404(Video, pk=pk)
+        edit_video.title = request.POST['title']
+        edit_video.save()
+        return JsonResponse({'success': True})
+
+def edit_video_url(request, pk):
+    if request.method == 'POST':
+        edit_video = get_object_or_404(Video, pk=pk)
+        url = convert_ytframe(request.POST['url'])
+        edit_video.url = url
+        edit_video.save()
+        return JsonResponse({'url': url})
+
+def edit_video_delete(request, pk):
+    if request.method == 'POST':
+        edit_video = get_object_or_404(Video, pk=pk)
+        edit_video.delete()
+        return JsonResponse({'success': True})
+        

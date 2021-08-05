@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Select Community{% endblock %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block title %}Select Communities{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-5">
-        <div class="card p-2">
-            <div class="card-body">
+<div class="container py-5">
+    <div class="d-flex justify-content-center">
+        <img src="{% static 'image/community_image.png' %}" alt="logo" style="height: 540px; width: 500px;" class="me-5 mt-4">
+        <div class="card p-2 mt-5" style="background-color: aliceblue;">
+            <div class="card-body" style="width: 430px;">
                 <h3 class="mb-4">Select community</h3>
                 <form action="" method="POST" novalidate>
                     {% csrf_token %}
@@ -18,6 +21,7 @@
                     </div>
                 </form>
             </div>
+        </div>
         </div>
     </div>
 </div>

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% block title %}Home{% endblock %}
 {% block extra_header %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
@@ -12,7 +13,7 @@
         <div class="text-center text-white">
             <div class="d-flex justify-content-center align-items-center">
                 <h1 class="display-4 fw-bolder me-4" id="community" communityId="{{community.id}}">{{community.name}}</h1>
-                <input type="text" value="/resident_login/{{community.id}}" id="myInput" style="display: none;">
+                <input type="text" id="myInput" style="display: none;">
                 <div class="toolTip">
                     <button onclick="myFunction()" onmouseout="outFunc()" class="btn btn-primary">
                         <span class="tooltiptext" id="myTooltip">Copy to clipboard</span>
@@ -27,8 +28,9 @@
         </div>
     </div>
 </header>
-<section class="py-5">
+<section class="pb-3">
     <div class="container px-4 px-lg-5 mt-5" style="position: relative;">
+        <h3 class="mb-3">&lt;Playlists&gt;</h3>
         <div class="pagination">
             <span class="step-links">
                 {% if page_obj.has_previous %}
@@ -102,6 +104,8 @@
                 }
             });
         })
+        var url_start = window.location.protocol + window.location.hostname + ':' + window.location.port
+        document.getElementById('myInput').value = url_start + '/resident_login/' + $('#community').attr('communityId'); 
     })
     function myFunction() {
         $('#myInput').show();
@@ -112,7 +116,7 @@
         $('#myInput').hide();
         
         var tooltip = document.getElementById("myTooltip");
-        tooltip.innerHTML = "Copied: " + copyText.value;
+        tooltip.innerHTML = "Copied!";
     }
 
     function outFunc() {

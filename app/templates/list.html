@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block title %}Video List{% endblock %}
+{% block extra_header %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+<div class="container">
+    <div class="row">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="width: 15%;">community</th>
+                        <th style="width: 25%;">group</th>
+                        <th style="width: 20%;">title</th>
+                        <th>source <span class="text-danger fw-normal">*auto covert to embedded url</span></th>
+                    </tr>
+                </thead>
+                <tbody id="myTable">
+                    {% for video in videos %}
+                    <tr>
+                        <td class="align-middle">{{forloop.counter}}</td>
+                        <td>
+                            <select name="community" class="form-control communitySelect" videoId={{video.id}}>
+                                {% for obj in communities %}
+                                    {% if obj == video.community %}
+                                    <option value="{{obj.id}}" selected>{{obj.name}}</option>
+                                    {% else %}
+                                    <option value="{{obj.id}}">{{obj.name}}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="groupBody">
+                            <select name="group" class="form-control groupSelect" videoId={{video.id}}>
+                                {% for obj in video.community.video_groups.all %}
+                                    {% if obj == video.group %}
+                                    <option value="{{obj.id}}" selected>{{obj.name}}</option>
+                                    {% else %}
+                                    <option value="{{obj.id}}">{{obj.name}}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" value="{{video.title}}" class="form-control titleInput" name="title" videoId={{video.id}}>
+                        </td>
+                        <td class="d-flex">
+                            <input type="text" value="{{video.url}}" class="form-control urlInput" name="url" videoId={{video.id}}>
+                            <img src="{% static 'image/trash_box.png' %}" alt="delete_image" style="width: 35px; height: 36px;" class="deleteImage" videoId={{video.id}}>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>   
+        </div>
+    <div class="col-md-12 text-center">
+</div>
+{% endblock %}
+{% block javascript %}
+<script src="{% static 'js/list.js' %}"></script>
+{% endblock %}

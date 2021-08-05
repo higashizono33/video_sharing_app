@@ -1,0 +1,9 @@
+<select name="group" class="form-control groupSelect" videoId={{video.id}}>
+    {% for obj in video.community.video_groups.all %}
+        {% if obj == video.group %}
+        <option value="{{obj.id}}" selected>{{obj.name}}</option>
+        {% else %}
+        <option value="{{obj.id}}">{{obj.name}}</option>
+        {% endif %}
+    {% endfor %}
+</select>

@@ -1,33 +1,40 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load crispy_forms_tags %}
-{% block title %}Index{% endblock %}
+{% block title %}Intro{% endblock %}
 {% block content %}
 <main>
     <div class="container py-4">
-        <div class="p-5 mb-4 bg-secondary rounded-3">
-            <div class="container-fluid py-5">
-                <h1 class="display-5 fw-bold">Let's share videos and talk</h1>
-                <p class="col-md-8 fs-4">Create communities, Invited friends and Talk about uploaded videos. Recent video media is too public, so this is a platform to share your favorite videos in your private.</p>
-                <a href="{% url 'signup' %}"><button class="btn btn-primary btn-lg" type="button">Start</button></a>
+        <div class="p-5 mb-4 rounded-3" style="background-color: aliceblue;">
+            <div class="container-fluid pt-3">
+                <div class="d-flex">
+                    <div class="pt-5">
+                        <h1 class="display-5 fw-bold">Let's share videos and talk</h1>
+                        <p class="col-md-10 fs-4">Create communities, Invited friends and Talk about uploaded videos. Recent video media is too public, so this is a platform to share your favorite videos in your private.</p>
+                        <a href="{% url 'signup' %}"><button class="btn btn-primary btn-lg" type="button">Start</button></a>
+                    </div>
+                    <img src="{% static 'image/video_sharing_logo.png' %}" alt="logo">
+                </div>
+
             </div>
         </div>
         <div class="row align-items-md-stretch">
             <div class="col-md-4">
-                <div class="h-100 p-5 bg-light border rounded-3">
+                <div class="h-100 p-5 border rounded-3" style="background-color: aliceblue;">
                     <h2>Own community</h2>
                     <p>You can create own communities/groups and invite friends there. And, own communities separately on your purpose and invite friends as you chose.</p>
                     <button class="btn btn-outline-secondary" type="button">Example button</button>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="h-100 p-5 bg-light border rounded-3">
+                <div class="h-100 p-5 border rounded-3" style="background-color: aliceblue;">
                     <h2>Share video link</h2>
                     <p>You or staff friends/residents can add video links such from YouTube and share with all in the community.</p>
                     <button class="btn btn-outline-secondary" type="button">Example button</button>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="h-100 p-5 bg-light border rounded-3">
+                <div class="h-100 p-5 border rounded-3" style="background-color: aliceblue;">
                     <h2>Talk in community</h2>
                     <p>Residents can post what they thought about videos and others can reply to each post as needed.</p>
                     <button class="btn btn-outline-secondary" type="button">Example button</button>

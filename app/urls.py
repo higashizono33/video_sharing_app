@@ -21,4 +21,10 @@ urlpatterns = [
     path('manage_resident', ManageResidentView.as_view(), name='manage_resident'),
     path('delete_resident/<int:resident_id>', delete_resident, name='delete_resident'),
     path('set_admin/<int:resident_id>', set_admin, name='set_admin'),
+    path('video/list', VideoListView.as_view(), name='list_video'),
+    path('edit/video/<int:pk>/community', edit_video_community, name='edit_video_community'),
+    path('edit/video/<int:pk>/group', edit_video_group, name='edit_video_group'),
+    path('edit/video/<int:pk>/title', edit_video_title, name='edit_video_title'),
+    path('edit/video/<int:pk>/url', edit_video_url, name='edit_video_url'),
+    path('edit/video/<int:pk>/delete', edit_video_delete, name='edit_video_delete'),
 ]

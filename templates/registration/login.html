@@ -1,22 +1,15 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 {% block title %}Log In{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-5">
-        <div class="card p-2">
+<div class="container py-5">
+    <div class="d-flex justify-content-center">
+        <img src="{% static 'image/video_sharing_logo.png' %}" alt="logo" style="height: 480px;" class="me-5">
+        <div class="card p-2 mt-5" style="background-color: aliceblue;">
             <div class="card-body">
-                <div class="d-flex">
-                    <h3 class="mb-4">Log In</h3>
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-success px-3 py-1 ms-3" role="alert">
-                                {{message}}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <form action="{% url 'login' %}" method="POST" novalidate>
+                <h3 class="mb-4">Log In</h3>
+                <form action="{% url 'login' %}" method="POST" novalidate style="width: 400px;">
                     {% csrf_token %}
                     {{form|crispy}}
                     <div class="mt-3">

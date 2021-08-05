@@ -23,6 +23,9 @@ $(document).ready(function(){
                     '<a id="last" href="?post_page=4">last »</a> \n'
                     
                     $('.step-links-post').html(first_page);
+                    $('.modal-body input').attr('value', id);
+                    $('#text_post').val('');
+                    $('.p_error').text('');
                 }
             }
         })

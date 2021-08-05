@@ -6,6 +6,7 @@ from crispy_forms.layout import Layout, Submit, Row, Column, ButtonHolder
 
 class CommunityCreateForm(ModelForm):
     description = forms.CharField(required=True, widget=forms.Textarea(attrs={'rows': 3}))
+    password = forms.CharField(label='password', max_length=100, widget=forms.TextInput(attrs={'type': 'password'}))
 
     class Meta:
         model = Community
@@ -29,6 +30,7 @@ class ResidentCreateForm(ModelForm):
         fields = ['name', 'community']
 
 class VideoCreateForm(ModelForm):
+    url = forms.URLField(required=True, widget=forms.TextInput(attrs={'placeholder': 'YouTube link here'}))
 
     def __init__(self, *args, **kwargs):
         community_id = kwargs.pop('community_id')
@@ -40,6 +42,7 @@ class VideoCreateForm(ModelForm):
             group_list.append((group.id, group.name))
 
         self.fields['group'].choices = group_list
+        self.fields['group'].label = 'Group *please use add-tab'
 
         self.helper = FormHelper()
         self.helper.attrs = {"novalidate": '', "id":'community.id'}
@@ -83,6 +86,6 @@ class GroupCreateForm(ModelForm):
 
 class ResidentLoginForm(forms.Form):
     name = forms.CharField(label='username', max_length=50)
-    password = forms.CharField(label='password', max_length=100)
+    password = forms.CharField(label='community-password', max_length=100, widget=forms.TextInput(attrs={'type': 'password'}))
 
 
